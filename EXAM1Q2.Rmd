@@ -1,0 +1,136 @@
+---
+title: "EXAM 1 Q2"
+author: "Trey Davidson"
+date: "2024-10-12"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+### Part A
+```{r }
+
+library(caret)
+
+data <- read.table("~/Desktop/HW/EXAM1/T7_1_SEISHU.DAT", header = FALSE)
+colnames(data)[colnames(data) == "V1"] <- "taste"
+
+# Sets x and y's for model
+x <- data[, 2:10]  
+y <- data$taste
+
+# Creates df from y and x data
+model_data <- data.frame(taste = y, x)
+
+# Uses train_control to eaisly run Leave one out cross validation 
+train_control <- trainControl(method = "LOOCV")
+
+
+model <- train(taste ~ ., data = model_data, method = "lm", trControl = train_control)
+
+# PUlls RMSE from results
+model$results$RMSE
+
+```
+
+
+
+### B.
+
+```{r }
+
+library(leaps)
+
+data <- read.table("~/Desktop/HW/EXAM1/T7_1_SEISHU.DAT", header = FALSE)
+colnames(data)[1] <- "taste"
+
+x <- data[, 2:10]  
+y <- data$taste
+
+model_data <- data.frame(taste = y, x)
+
+best_subset <- regsubsets(taste ~ ., data = model_data, nvmax = 9)
+
+summary_best <- summary(best_subset)
+
+cp_values <- summary_best$cp
+
+min_cp_index <- which.min(cp_values)
+best_cp_value <- cp_values[min_cp_index]
+best_model_size <- min_cp_index
+
+cat("Best model size (p):", best_model_size, "\n")
+
+selected_vars <- names(coef(best_subset, best_model_size))[-1]
+
+# This creates a formula that then can be plugged into lm model
+lm_form <- as.formula(paste("taste ~", paste(selected_vars, collapse = " + ")))
+
+linnear_model <- lm(lm_form, data = data)
+
+summary(linnear_model)
+
+```
+
+R sqaured = 0.5174
+Yes all varibales in final model are statstical siginfinct 
+V2 = odor
+V3 = PH
+V6 = Sake meter
+V7 = direct reucing sugar 
+
+### C.
+```{r }
+library(leaps)
+# Sets up data and defines V1 as TASTE
+data <- read.table("~/Desktop/HW/EXAM1/T7_1_SEISHU.DAT", header = FALSE)
+colnames(data)[1] <- "taste"
+y <- data$taste
+x <- data[, 2:10]
+model_data <- data.frame(y, x)
+
+
+loocv_errors <- numeric(6)
+
+# k is the amount of varibles that dataset will hold. 
+for (k in 3:9) {
+  #  This finds the model with the best number of varibles for any given varible
+  best_subset <- regsubsets(y ~ ., data = model_data, nbest = 1, nvmax = k)
+  best_models <- summary(best_subset)
+  
+  # Initialize a vector to hold the test errors for the best k-variable model
+  test_errors <- numeric(nrow(model_data))
+  
+  # Perform LOOCV
+  for (i in 1:nrow(model_data)) {
+    train_data <- model_data[-i, ]
+    test_data <- model_data[i, , drop = FALSE]
+    
+   
+    selected_vars <- names(coef(best_subset, k))
+    model_formula <- as.formula(paste("y ~", paste(selected_vars[-1], collapse = "+")))
+    
+    fit <- lm(model_formula, data = train_data)
+    
+    prediction <- predict(fit, newdata = test_data)
+    
+    # Calculate squared error
+    test_errors[i] <- (test_data$y - prediction)^2
+  }
+  
+  # Calculate LOOCV error for the current model size
+  loocv_errors[k-3] <- mean(test_errors)
+}
+
+# This prints the test errors at every varible level from 3-9
+loocv_errors
+
+```
+
+#### D.
+d. Yes they do line up. the second one in the vector has the lowest error, and part b gave out 4 varibles. It does make sense if the model is truely predictive. As Mallow's CP and LOOCV emppthise difernt things, but a good model should minmize both. 

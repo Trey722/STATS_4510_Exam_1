@@ -1,0 +1,360 @@
+---
+title: "Exam 1 Q1"
+author: "Trey Davidson"
+date: "2024-10-11"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### A. 
+
+``` {r a.}
+
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+
+set.seed(10)
+
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+n <- nrow(data)
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+
+# Creates logsitc model using gender as y and all other varibales as predictors
+model <- glm(gender ~ ., data = train_data, family = binomial)
+
+# Summarizes model
+summary(model)
+
+
+# Predicts probabilities of women with test data
+predicted_probs <- predict(model, newdata = test_data, type = "response")
+
+# If probablituy of woman > 0.5 then assumes its a women and if its less then assumes its a male
+predicted_classes <- ifelse(predicted_probs > 0.5, 1, 0)
+
+
+# Creates a confusion matrix 
+confusion_matrix <- table(Predicted = predicted_classes, Actual = test_data$gender)
+
+
+confusion_matrix
+
+
+# Calclues the confusion matrix accuracy by callcuting the sum of acutal correct predicitons over the total predictoons
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+
+1 - accuracy
+```
+
+aprox 9% error rate is quite low and means that this logstic model is clealry able to caputre some type of realtionship between preidcotr and output varibales. 
+
+
+### B.
+``` {r b. }
+
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+set.seed(10)
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+data$gender <- as.factor(data$gender)
+
+
+print(data$gender)
+
+
+n <- nrow(data)
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+valid_data <- data[-train_indices, ]
+
+
+library(MASS)
+
+
+lda_model <- lda(gender ~ ., data = train_data)
+
+
+lda_predictions <- predict(lda_model, valid_data)$class
+
+
+confusion_matrix <- table(lda_predictions, valid_data$gender)
+
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+
+1- accuracy
+
+```
+
+aprox 12% Error rate is worse then logsitc, but still means linnear discirmnate anayslis is able to caputre some type of realtionship. I predcit that qudratic will have a lower test error. 
+
+
+### C.
+``` {r c.}
+
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+set.seed(10)
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+data$gender <- as.factor(data$gender)
+
+
+print(data$gender)
+
+
+n <- nrow(data)
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+valid_data <- data[-train_indices, ]
+
+
+library(MASS)
+
+
+qda_model <- qda(gender ~ ., data = train_data)
+
+
+qda_predictions <- predict(qda_model, valid_data)$class
+
+
+confusion_matrix <- table(Predicted = qda_predictions, Actual = valid_data$gender)
+
+
+print(confusion_matrix)
+
+
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+1 - accuracy
+
+```
+
+
+Supprsingly to me qda has a higher test error of 15.625%. This must mean that covariances are more similair then I thought. 
+
+
+### D.
+``` {r d.}
+
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+set.seed(10)
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+data$gender <- as.factor(data$gender)
+
+
+print(data$gender)
+
+
+n <- nrow(data)
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+valid_data <- data[-train_indices, ]
+
+
+library(e1071)
+
+
+nb_model <- naiveBayes(gender ~ ., data = train_data)
+
+summary(nb_model)
+
+
+nb_predictions <- predict(nb_model, valid_data)
+
+
+confusion_matrix <- table(Predicted = nb_predictions, Actual = valid_data$gender)
+
+
+print(confusion_matrix)
+
+
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+1 - accuracy
+
+```
+
+This one had a test error of 15.625%. THis to me may suggest that the data is not indepdentent, and is better suited for a da.
+
+### E. 
+
+```{r knn}
+
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+set.seed(10)
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+data$gender <- as.factor(data$gender)
+
+
+print(data$gender)
+
+
+
+n <- nrow(data)
+
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+
+train_features <- train_data[, -1]  
+test_features <- test_data[, -1]  
+train_labels <- train_data$gender
+test_labels <- test_data$gender
+
+
+
+library(class)
+
+k <- 4
+
+knn_predictions <- knn(train = train_features, test = test_features, cl = train_labels, k = k)
+
+confusion_matrix <- table(Predicted = knn_predictions, Actual = test_labels)
+
+print(confusion_matrix)
+
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+
+error_rate <- 1 - accuracy
+print(error_rate)
+
+
+```
+
+Knn performed the best with 0.0625% accuracy.
+
+
+### F. 
+``` {r best}
+data <- read.table("~/Desktop/HW/EXAM1/T5_1_PSYCH.DAT", header = FALSE)
+
+
+colnames(data)[colnames(data) == "V1"] <- "gender"
+colnames(data)[colnames(data) == "V2"] <- "inconsistencies"
+colnames(data)[colnames(data) == "V3"] <- "paper"
+colnames(data)[colnames(data) == "V4"] <- "tool"
+colnames(data)[colnames(data) == "V5"] <- "vocab"
+
+
+set.seed(10)
+
+
+data$gender <- ifelse(data$gender == 1, 0, 1)
+
+
+data$gender <- as.factor(data$gender)
+
+
+print(data$gender)
+
+
+
+n <- nrow(data)
+
+train_indices <- sample(1:n, size = 0.5 * n)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+
+train_features <- train_data[, -1]  
+test_features <- test_data[, -1]  
+train_labels <- train_data$gender
+test_labels <- test_data$gender
+
+
+
+library(class)
+
+k <- 4
+
+knn_predictions <- knn(train = train_features, test = data[, -1], cl = train_labels, k = k)
+
+confusion_matrix <- table(Predicted = knn_predictions, Actual = data$gender)
+
+print(confusion_matrix)
+
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+
+
+error_rate <- 1 - accuracy
+
+error_rate
+```
+
+
+I ran knn with all the data and got 7.8125%, while only traing it with 50%, and testing on 100%
+
